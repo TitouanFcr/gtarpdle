@@ -1,0 +1,79 @@
+name: Discord notification nouveaux personnages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'index.html'
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Extraire et envoyer les personnages
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          const https = require('https');
+
+          const content = fs.readFileSync('index.html', 'utf8');
+          const matches = [...content.matchAll(/\{nom:"([^"]+)"[^}]*streamer:"([^"]+)"/g)];
+          const players = matches.map(m => ({ nom: m[1], streamer: m[2] }));
+
+          const { execSync } = require('child_process');
+          let prevContent = '';
+          try {
+            prevContent = execSync('git show HEAD~1:index.html').toString();
+          } catch(e) {}
+
+          const prevMatches = prevContent ? [...prevContent.matchAll(/\{nom:"([^"]+)"[^}]*streamer:"([^"]+)"/g)] : [];
+          const prevNoms = new Set(prevMatches.map(m => m[1]));
+
+          const newPlayers = players.filter(p => !prevNoms.has(p.nom));
+
+          function sendMessage(content) {
+            return new Promise((resolve, reject) => {
+              const body = JSON.stringify({ content });
+              const options = {
+                hostname: 'discord.com',
+                path: `/api/v10/channels/${process.env.DISCORD_CHANNEL_ID}/messages`,
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+                  'Content-Type': 'application/json',
+                  'Content-Length': Buffer.byteLength(body)
+                }
+              };
+              const req = https.request(options, res => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => resolve(JSON.parse(data)));
+              });
+              req.on('error', reject);
+              req.write(body);
+              req.end();
+            });
+          }
+
+          async function main() {
+            if (newPlayers.length === 0) {
+              console.log('Aucun nouveau personnage détecté.');
+              return;
+            }
+            const lines = newPlayers.map(p => `**${p.nom}** — ${p.streamer}`).join('\n');
+            const msg = `🆕 **${newPlayers.length} nouveau(x) personnage(s) ajouté(s) :**\n\n${lines}`;
+            await sendMessage(msg);
+            console.log('Message envoyé !');
+          }
+
+          main().catch(console.error);
+          EOF
