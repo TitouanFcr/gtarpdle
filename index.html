@@ -418,6 +418,7 @@ function compareArr(a, b){
   return "wrong";
 }
 function compareFam(g, t){
+  if(!g || !t) return "wrong";
   if(norm(g.nom) === norm(t.nom)) return "correct";
   if(norm(g.famille) === norm(t.famille)) return "partial";
   return "wrong";
@@ -661,11 +662,14 @@ document.getElementById("vbtn").addEventListener("click", function(){
   doSubmit();
 });
 
-document.getElementById("lb-save").addEventListener("click", function(){
-  const v = document.getElementById("lb-inp").value.trim();
+var lbSaveBtn = document.getElementById("lb-save");
+if(lbSaveBtn){ lbSaveBtn.addEventListener("click", function(){
+  var lbInp = document.getElementById("lb-inp");
+  if(!lbInp) return;
+  const v = lbInp.value.trim();
   if(!v) return;
   ST.pseudo = v; saveST(); upsertLB(v, ST.totalScore); renderLB();
-});
+}); }
 
 function switchTab(t){
   document.getElementById("panel-jeu").style.display = t === "jeu" ? "block" : "none";
