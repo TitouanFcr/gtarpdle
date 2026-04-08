@@ -423,7 +423,7 @@ function compareFam(g, t){
   return "wrong";
 }
 
-let ST = {totalScore:0, games:0, best:null, pseudo:""};
+let ST = {totalScore:0, games:0, best:null, pseudo:"", discordId:null, avatar:null};
 function loadST(){
   try{
     const d = JSON.parse(localStorage.getItem("gtarpdle_v1") || "{}");
@@ -431,6 +431,8 @@ function loadST(){
     ST.games = d.games || 0;
     ST.best = d.best || null;
     ST.pseudo = d.pseudo || "";
+    ST.discordId = d.discordId || null;
+    ST.avatar = d.avatar || null;
   }catch(e){}
 }
 function saveST(){ try{ localStorage.setItem("gtarpdle_v1", JSON.stringify(ST)); }catch(e){} }
