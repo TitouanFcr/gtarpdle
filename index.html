@@ -201,11 +201,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="panel-lb">
       <div class="lb-title">Classement</div>
       <div class="lb-note">Top 100 — Connecte-toi avec Discord pour sauvegarder ton score sur tous tes appareils.</div>
-      <a class="dc-btn" href="/auth/discord" id="lb-discord-btn" style="display:block;text-align:center;margin-bottom:1rem;border-radius:var(--radius);padding:10px;font-size:13px;font-weight:600;text-decoration:none;">Se connecter avec Discord</a>
-      <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:.5rem;">Ou entre un pseudo manuellement :</div>
-      <div class="lb-input-wrap">
-        <input id="lb-inp" type="text" placeholder="Ton pseudo..." maxlength="24"/>
-        <button id="lb-save">Enregistrer</button>
+      <div id="lb-discord-section">
+        <a class="dc-btn" href="/auth/discord" id="lb-discord-btn" style="display:block;text-align:center;margin-bottom:1rem;border-radius:var(--radius);padding:10px;font-size:13px;font-weight:600;text-decoration:none;">Se connecter avec Discord</a>
+      </div>
+      <div id="lb-user-section" style="display:none;margin-bottom:1rem;padding:10px 12px;background:rgba(45,106,45,0.15);border:.5px solid var(--green-bd);border-radius:var(--radius);display:none;align-items:center;gap:10px;">
+        <img id="lb-avatar" src="" style="width:36px;height:36px;border-radius:50%;display:block;" />
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--green-tx);" id="lb-username"></div>
+          <div style="font-size:11px;color:var(--text3);">Connecté via Discord</div>
+        </div>
       </div>
       <div id="lb-list"></div>
     </div>
@@ -664,7 +668,7 @@ function switchTab(t){
   document.getElementById("panel-lb").style.display = t === "lb" ? "block" : "none";
   document.getElementById("tab-jeu").classList.toggle("active", t === "jeu");
   document.getElementById("tab-lb").classList.toggle("active", t === "lb");
-  if(t === "lb"){ if(ST.pseudo) document.getElementById("lb-inp").value = ST.pseudo; renderLB(); }
+  if(t === "lb"){ updateDiscordUI(); renderLB(); }
 }
 
 function closeDcModal(){
@@ -681,8 +685,23 @@ setInterval(function(){
   else { updateBar(); }
 }, 1000);
 
+function updateDiscordUI(){
+  if(ST.discordId){
+    const sec = document.getElementById("lb-discord-section");
+    const usr = document.getElementById("lb-user-section");
+    const avt = document.getElementById("lb-avatar");
+    const unm = document.getElementById("lb-username");
+    if(sec) sec.style.display = "none";
+    if(usr){ usr.style.display = "flex"; }
+    if(avt && ST.avatar) avt.src = ST.avatar;
+    if(unm) unm.textContent = ST.pseudo;
+    try{ localStorage.setItem("dc_popup_seen","1"); }catch(e){}
+    if(ST.pseudo) upsertLB(ST.pseudo, ST.totalScore);
+  }
+}
+
 loadST(); loadLB(); initGame();
-if(ST.pseudo) document.getElementById("lb-inp").value = ST.pseudo;
+updateDiscordUI();
 setTimeout(showDcModal, 1200);
 </script>
 </body>
