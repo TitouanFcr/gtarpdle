@@ -202,7 +202,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="lb-title">Classement</div>
       <div class="lb-note">Top 100 — Connecte-toi avec Discord pour sauvegarder ton score sur tous tes appareils.</div>
       <div id="lb-discord-section">
-        <a class="dc-btn" href="/auth/discord" id="lb-discord-btn" style="display:block;text-align:center;margin-bottom:1rem;border-radius:var(--radius);padding:10px;font-size:13px;font-weight:600;text-decoration:none;">Se connecter avec Discord</a>
+        <a class="dc-btn" href="/auth/discord?join=1" id="lb-discord-btn" style="display:block;text-align:center;margin-bottom:1rem;border-radius:var(--radius);padding:10px;font-size:13px;font-weight:600;text-decoration:none;">Se connecter avec Discord</a>
       </div>
       <div id="lb-user-section" style="display:none;margin-bottom:1rem;padding:10px 12px;background:rgba(45,106,45,0.15);border:.5px solid var(--green-bd);border-radius:var(--radius);display:none;align-items:center;gap:10px;">
         <img id="lb-avatar" src="" style="width:36px;height:36px;border-radius:50%;display:block;" />
@@ -254,8 +254,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div class="dc-hook">Sauvegarde ton score !</div>
     <div class="dc-sub">Connecte-toi avec ton compte Discord pour enregistrer ton score dans le classement global et ne jamais le perdre, même si tu changes de navigateur.</div>
-    <div class="dc-hint">Il est conseillé de le faire pour garder ta progression.</div>
-    <a class="dc-btn" href="/auth/discord" onclick="closeDcModal()">Se connecter avec Discord</a>
+    <div class="dc-hint">Rejoins aussi le Discord pour toutes infos, mises à jour et entraide !</div>
+    <a class="dc-btn" href="/auth/discord?join=1" onclick="closeDcModal()">Se connecter avec Discord</a>
     <div class="dc-skip" onclick="closeDcModal()">Continuer sans Discord</div>
   </div>
 </div>
@@ -441,6 +441,12 @@ function loadSlot(s){ try{ return JSON.parse(localStorage.getItem("gslot_"+s) ||
 function saveSlot(s, d){ try{ localStorage.setItem("gslot_"+s, JSON.stringify(d)); }catch(e){} }
 
 let LB = [];
+async function fetchLB(){
+  try{
+    const r = await fetch("/api/scores");
+    if(r.ok){ LB = await r.json(); }
+  }catch(e){ LB = []; }
+}
 function loadLB(){ try{ LB = JSON.parse(localStorage.getItem("gtarpdle_lb_v1") || "[]"); }catch(e){ LB = []; } }
 function saveLB(){ try{ localStorage.setItem("gtarpdle_lb_v1", JSON.stringify(LB)); }catch(e){} }
 function upsertLB(p, s){
@@ -523,7 +529,7 @@ function showWin(n){
   ST.games += 1;
   if(ST.best === null || pts > ST.best) ST.best = pts;
   saveST();
-  if(ST.pseudo) upsertLB(ST.pseudo, ST.totalScore);
+  if(ST.pseudo) upsertLB(ST.discordId, ST.pseudo, ST.avatar, ST.totalScore);
   updateBar();
   renderLB();
   document.getElementById("end").innerHTML =
@@ -676,7 +682,7 @@ function switchTab(t){
   document.getElementById("panel-lb").style.display = t === "lb" ? "block" : "none";
   document.getElementById("tab-jeu").classList.toggle("active", t === "jeu");
   document.getElementById("tab-lb").classList.toggle("active", t === "lb");
-  if(t === "lb"){ updateDiscordUI(); renderLB(); }
+  if(t === "lb"){ updateDiscordUI(); fetchLB().then(renderLB); }
 }
 
 function closeDcModal(){
@@ -704,13 +710,14 @@ function updateDiscordUI(){
     if(avt && ST.avatar) avt.src = ST.avatar;
     if(unm) unm.textContent = ST.pseudo;
     try{ localStorage.setItem("dc_popup_seen","1"); }catch(e){}
-    if(ST.pseudo) upsertLB(ST.pseudo, ST.totalScore);
+    if(ST.pseudo) upsertLB(ST.discordId, ST.pseudo, ST.avatar, ST.totalScore);
   }
 }
 
 loadST(); loadLB(); initGame();
 updateDiscordUI();
 setTimeout(showDcModal, 1200);
+fetchLB().then(renderLB);
 </script>
 </body>
 </html>
