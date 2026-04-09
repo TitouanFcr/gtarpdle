@@ -710,7 +710,7 @@ function updateDiscordUI(){
     if(avt && ST.avatar) avt.src = ST.avatar;
     if(unm) unm.textContent = ST.pseudo;
     try{ localStorage.setItem("dc_popup_seen","1"); }catch(e){}
-    if(ST.pseudo) upsertLB(ST.discordId, ST.pseudo, ST.avatar, ST.totalScore).then(function(){ fetchLB().then(renderLB); });
+    if(ST.pseudo) upsertLB(ST.discordId, ST.pseudo, ST.avatar, ST.totalScore).then(function(){ return fetchLB(); }).then(renderLB);
   }
 }
 
