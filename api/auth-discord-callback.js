@@ -7,6 +7,7 @@ export default async function handler(req, res) {
   const REDIRECT_URI = "https://gtarpdle.fr/auth/discord/callback";
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_KEY;
+  const GUILD_ID = "1491242406874710247";
 
   const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
     method: "POST",
@@ -33,13 +34,39 @@ export default async function handler(req, res) {
     ? `https://cdn.discordapp.com/avatars/${discordId}/${user.avatar}.png`
     : null;
 
+  // Add user to Discord server
+  const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
+  if (BOT_TOKEN) {
+    await fetch(`https://discord.com/api/v10/guilds/${GUILD_ID}/members/${discordId}`, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bot ${BOT_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ access_token: tokenData.access_token }),
+    });
+  }
+
+  // Upsert in Supabase
+  await fetch(`${SUPABASE_URL}/rest/v1/scores?discord_id=eq.${discordId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Prefer": "return=representation",
+    },
+    body: JSON.stringify({ pseudo, avatar }),
+  });
+
+  // Insert if not exists
   await fetch(`${SUPABASE_URL}/rest/v1/scores`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "apikey": SUPABASE_KEY,
       "Authorization": `Bearer ${SUPABASE_KEY}`,
-      "Prefer": "resolution=merge-duplicates",
+      "Prefer": "resolution=ignore-duplicates",
     },
     body: JSON.stringify({ discord_id: discordId, pseudo, avatar, score: 0 }),
   });
@@ -53,7 +80,7 @@ export default async function handler(req, res) {
       localStorage.setItem("gtarpdle_v1", JSON.stringify(d));
     } catch(e) {}
     window.location.href = "/";
-  </script></body></html>`;
+  <\/script></body></html>`;
 
   res.setHeader("Content-Type", "text/html");
   res.send(html);
