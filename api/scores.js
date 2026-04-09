@@ -10,22 +10,22 @@ export default async function handler(req, res) {
       },
     });
     const data = await r.json();
-    return res.json(data);
+    return res.json(Array.isArray(data) ? data : []);
   }
 
   if (req.method === "POST") {
     const { discord_id, pseudo, avatar, score } = req.body;
     if (!discord_id) return res.status(400).json({ error: "Missing discord_id" });
 
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/scores?discord_id=eq.${discord_id}`, {
-      method: "PATCH",
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/scores`, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         "apikey": SUPABASE_KEY,
         "Authorization": `Bearer ${SUPABASE_KEY}`,
-        "Prefer": "return=representation",
+        "Prefer": "resolution=merge-duplicates,return=representation",
       },
-      body: JSON.stringify({ pseudo, avatar, score }),
+      body: JSON.stringify({ discord_id, pseudo, avatar, score }),
     });
     const data = await r.json();
     return res.json(data);
