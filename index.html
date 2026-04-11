@@ -449,12 +449,7 @@ async function fetchLB(){
 }
 function loadLB(){ try{ LB = JSON.parse(localStorage.getItem("gtarpdle_lb_v1") || "[]"); }catch(e){ LB = []; } }
 function saveLB(){ try{ localStorage.setItem("gtarpdle_lb_v1", JSON.stringify(LB)); }catch(e){} }
-function upsertLB(p, s){
-  const ex = LB.find(x => x.pseudo === p);
-  if(ex){ ex.score = s; } else { LB.push({pseudo:p, score:s}); }
-  LB.sort((a,b) => b.score - a.score);
-  saveLB();
-}
+
 function renderLB(){
   const el = document.getElementById("lb-list");
   if(!LB.length){
@@ -674,7 +669,7 @@ if(lbSaveBtn){ lbSaveBtn.addEventListener("click", function(){
   if(!lbInp) return;
   const v = lbInp.value.trim();
   if(!v) return;
-  ST.pseudo = v; saveST(); upsertLB(v, ST.totalScore); renderLB();
+  ST.pseudo = v; saveST(); upsertLB(null, v, null, ST.totalScore); fetchLB().then(renderLB);
 }); }
 
 function switchTab(t){
