@@ -3,5 +3,10 @@
     { "source": "/auth/discord", "destination": "/api/auth-discord" },
     { "source": "/auth/discord/callback", "destination": "/api/auth-discord-callback" },
     { "source": "/api/scores", "destination": "/api/scores" }
-  ]
+  ],
+  "functions": {
+    "api/*.js": {
+      "memory": 128
+    }
+  }
 }
