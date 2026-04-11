@@ -46,27 +46,29 @@ module.exports = async function(req, res) {
     });
   }
 
-  // Créer la ligne seulement si elle n'existe pas
-  await fetch(`${SUPABASE_URL}/rest/v1/scores`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": SUPABASE_KEY,
-      "Authorization": `Bearer ${SUPABASE_KEY}`,
-      "Prefer": "resolution=ignore-duplicates",
-    },
-    body: JSON.stringify({ discord_id: discordId, pseudo, avatar, score: 0 }),
-  });
-
+  // La page HTML lit le score local et l'envoie à Supabase
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head><body><script>
     try {
       const d = JSON.parse(localStorage.getItem("gtarpdle_v1") || "{}");
+      const localScore = parseInt(d.totalScore) || 0;
       d.discordId = "${discordId}";
       d.pseudo = "${pseudo}";
       d.avatar = ${avatar ? `"${avatar}"` : "null"};
       localStorage.setItem("gtarpdle_v1", JSON.stringify(d));
-    } catch(e) {}
-    window.location.href = "/";
+      // Envoie le vrai score local à Supabase
+      fetch("/api/scores", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          discord_id: "${discordId}",
+          pseudo: "${pseudo}",
+          avatar: ${avatar ? `"${avatar}"` : "null"},
+          score: localScore
+        })
+      }).then(function(){ window.location.href = "/"; });
+    } catch(e) {
+      window.location.href = "/";
+    }
   <\/script></body></html>`;
 
   res.setHeader("Content-Type", "text/html");
